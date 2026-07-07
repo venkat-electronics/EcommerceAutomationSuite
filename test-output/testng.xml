@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="E-Commerce Test Suite">
+    
+    <!-- ✅ ONLY TestListener here - RetryListener goes in @Test annotation -->
+    <listeners>
+        <listener class-name="com.ecommerce.listeners.TestListener"/>
+    </listeners>
+    
+    <test name="Login Tests">
+        <classes>
+            <class name="com.ecommerce.tests.LoginTest"/>
+        </classes>
+    </test>
+    
+</suite>
