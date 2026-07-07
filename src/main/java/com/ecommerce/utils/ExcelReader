@@ -1,0 +1,119 @@
+package com.ecommerce.utils;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class ExcelReader {
+    
+    private Workbook workbook;
+    private Sheet sheet;
+    
+    public ExcelReader(String filePath, String sheetName) {
+        try {
+            FileInputStream fis = new FileInputStream(filePath);
+            workbook = new XSSFWorkbook(fis);
+            sheet = workbook.getSheet(sheetName);
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to load Excel file: " + filePath);
+        }
+    }
+    
+    public List<Map<String, String>> getAllRows() {
+        List<Map<String, String>> rows = new ArrayList<>();
+        
+        Row headerRow = sheet.getRow(0);
+        int totalColumns = headerRow.getLastCellNum();
+        
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+            
+            Map<String, String> rowData = new HashMap<>();
+            for (int j = 0; j < totalColumns; j++) {
+                Cell cell = row.getCell(j);
+                String header = headerRow.getCell(j).getStringCellValue();
+                String value = getCellValueAsString(cell);
+                rowData.put(header, value);
+            }
+            rows.add(rowData);
+        }
+        
+        return rows;
+    }
+    
+    public List<String> getColumnData(String columnName) {
+        List<String> columnData = new ArrayList<>();
+        Row headerRow = sheet.getRow(0);
+        int columnIndex = -1;
+        
+        for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+            if (headerRow.getCell(i).getStringCellValue().equals(columnName)) {
+                columnIndex = i;
+                break;
+            }
+        }
+        
+        if (columnIndex == -1) {
+            throw new IllegalArgumentException("Column not found: " + columnName);
+        }
+        
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row != null) {
+                columnData.add(getCellValueAsString(row.getCell(columnIndex)));
+            }
+        }
+        
+        return columnData;
+    }
+    
+    public String getCellData(int rowNum, int colNum) {
+        Row row = sheet.getRow(rowNum);
+        if (row == null) return "";
+        return getCellValueAsString(row.getCell(colNum));
+    }
+    
+    public String getCellData(String rowName, String columnName) {
+        // Implementation for row by name lookup
+        return "";
+    }
+    
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return "";
+        
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                }
+                return String.valueOf((long) cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
+        }
+    }
+    
+    public void close() {
+        try {
+            if (workbook != null) {
+                workbook.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
